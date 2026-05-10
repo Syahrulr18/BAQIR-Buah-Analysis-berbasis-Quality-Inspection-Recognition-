@@ -5,7 +5,6 @@ import {
   User,
   ChevronRight,
   Settings,
-  Globe,
   Bell,
   Info,
   LogOut,
@@ -57,7 +56,7 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F1F8E9' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffffff' }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -73,6 +72,7 @@ export default function ProfileScreen() {
               backgroundColor: '#2E7D32',
               alignItems: 'center',
               justifyContent: 'center',
+              marginTop: 50,
               marginBottom: 14,
               shadowColor: '#2E7D32',
               shadowOffset: { width: 0, height: 4 },
@@ -106,11 +106,9 @@ export default function ProfileScreen() {
               marginBottom: 16,
             }}
           >
-            <MenuItem icon={Settings} label="Pengaturan Akun" />
+            <MenuItem icon={Settings} label="Pengaturan Akun" onPress={() => router.push('/pengaturan-akun')} />
             <View style={{ height: 1, backgroundColor: '#F5F5F5', marginLeft: 70 }} />
-            <MenuItem icon={Globe} label="Bahasa" />
-            <View style={{ height: 1, backgroundColor: '#F5F5F5', marginLeft: 70 }} />
-            <MenuItem icon={Bell} label="Notifikasi" />
+            <MenuItem icon={Bell} label="Notifikasi" onPress={() => router.push('/notifikasi')} />
           </View>
 
           <View
@@ -126,9 +124,9 @@ export default function ProfileScreen() {
               marginBottom: 16,
             }}
           >
-            <MenuItem icon={Shield} label="Kebijakan Privasi" />
+            <MenuItem icon={Shield} label="Kebijakan Privasi" onPress={() => router.push('/kebijakan-privasi')} />
             <View style={{ height: 1, backgroundColor: '#F5F5F5', marginLeft: 70 }} />
-            <MenuItem icon={Info} label="Tentang Aplikasi" />
+            <MenuItem icon={Info} label="Tentang Aplikasi" onPress={() => router.push('/tentang-aplikasi')} />
           </View>
 
           <View
@@ -141,6 +139,7 @@ export default function ProfileScreen() {
               shadowOpacity: 0.06,
               shadowRadius: 6,
               elevation: 2,
+              marginBottom: 30,
             }}
           >
             <MenuItem
@@ -150,19 +149,6 @@ export default function ProfileScreen() {
               onPress={() => router.replace('/login')}
             />
           </View>
-
-          {/* App Version */}
-          <Text
-            style={{
-              textAlign: 'center',
-              fontSize: 12,
-              color: '#BDBDBD',
-              marginTop: 24,
-              fontWeight: '500',
-            }}
-          >
-            BAQIR v1.0.0
-          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>

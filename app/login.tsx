@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Leaf, Eye, EyeOff, User, Lock } from 'lucide-react-native';
+import Logo from '../components/Logo';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -53,7 +54,7 @@ export default function LoginScreen() {
               elevation: 8,
             }}
           >
-            <Leaf color="#FFFFFF" size={44} />
+            <Logo color="#FFFFFF" width={44} height={44} />
           </View>
           <Text style={{ fontSize: 28, fontWeight: '800', color: '#1B5E20', letterSpacing: 2 }}>
             BAQIR

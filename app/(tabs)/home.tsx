@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, ScrollView, TextInput, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TextInput, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, Bell } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import FruitCard from '../../components/FruitCard';
 import RecipeCard from '../../components/RecipeCard';
 import StorageTipCard from '../../components/StorageTipCard';
@@ -11,7 +11,7 @@ export default function HomeScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F1F8E9' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffffff' }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -26,6 +26,7 @@ export default function HomeScreen() {
             paddingHorizontal: 20,
             paddingTop: 16,
             paddingBottom: 8,
+            marginTop: 50,
           }}
         >
           <View>
@@ -35,23 +36,6 @@ export default function HomeScreen() {
             <Text style={{ fontSize: 22, fontWeight: '800', color: '#1a1a1a' }}>
               {userProfile.nama}
             </Text>
-          </View>
-          <View
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 14,
-              backgroundColor: '#FFFFFF',
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.06,
-              shadowRadius: 4,
-              elevation: 2,
-            }}
-          >
-            <Bell color="#1a1a1a" size={22} />
           </View>
         </View>
 
@@ -95,14 +79,20 @@ export default function HomeScreen() {
             <Text style={{ fontSize: 18, fontWeight: '700', color: '#1a1a1a' }}>
               Manfaat Buah
             </Text>
-            <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '600' }}>
-              Lihat Semua
-            </Text>
+            <TouchableOpacity 
+              activeOpacity={0.7} 
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={() => router.push('/semua-buah')}
+            >
+              <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '600' }}>
+                Lihat Semua
+              </Text>
+            </TouchableOpacity>
           </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingLeft: 20, paddingRight: 6 }}
+            contentContainerStyle={{ paddingLeft: 20, paddingRight: 6, paddingBottom: 16, paddingTop: 4 }}
           >
             {manfaatBuah.map((item) => (
               <FruitCard
@@ -128,14 +118,20 @@ export default function HomeScreen() {
             <Text style={{ fontSize: 18, fontWeight: '700', color: '#1a1a1a' }}>
               Resep Jus
             </Text>
-            <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '600' }}>
-              Lihat Semua
-            </Text>
+            <TouchableOpacity 
+              activeOpacity={0.7} 
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={() => router.push('/semua-resep')}
+            >
+              <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '600' }}>
+                Lihat Semua
+              </Text>
+            </TouchableOpacity>
           </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingLeft: 20, paddingRight: 6 }}
+            contentContainerStyle={{ paddingLeft: 20, paddingRight: 6, paddingBottom: 16, paddingTop: 4 }}
           >
             {resepJus.map((item) => (
               <RecipeCard
