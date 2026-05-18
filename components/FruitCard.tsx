@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Leaf } from 'lucide-react-native';
-import type { Buah } from '../constants/mockData';
+import type { Buah } from '../constants/types';
 
 interface FruitCardProps {
   item: Buah;
@@ -52,7 +52,7 @@ export default function FruitCard({ item, onPress }: FruitCardProps) {
           {item.nama}
         </Text>
         <Text style={{ fontSize: 12, color: '#9E9E9E', lineHeight: 16 }} numberOfLines={2}>
-          {item.manfaat}
+          {item.family} - {item.kalori} kkal
         </Text>
       </View>
     </TouchableOpacity>

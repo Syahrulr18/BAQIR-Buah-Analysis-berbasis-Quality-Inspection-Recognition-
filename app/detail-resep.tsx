@@ -1,13 +1,54 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Clock, ChefHat, Check, CupSoda } from 'lucide-react-native';
-import { resepJus } from '../constants/mockData';
+import * as fruitService from '../services/fruitService';
+import type { ResepJus } from '../constants/types';
 
 export default function DetailResepScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const resep = resepJus.find((r) => r.id === id) || resepJus[0];
+  const [resep, setResep] = useState<ResepJus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadResep();
+  }, [id]);
+
+  const loadResep = async () => {
+    try {
+      const allResep = await fruitService.getAllResep();
+      const found = allResep.find((r) => r.id === Number(id));
+      setResep(found || null);
+    } catch (error) {
+      console.log('Gagal memuat resep:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#F1F8E9', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#2E7D32" />
+      </View>
+    );
+  }
+
+  if (!resep) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#F1F8E9', alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ fontSize: 16, color: '#9E9E9E' }}>Resep tidak ditemukan</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+          <Text style={{ fontSize: 15, color: '#2E7D32', fontWeight: '600' }}>Kembali</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Parse bahan & langkah (bisa string JSON atau array)
+  const bahanList = Array.isArray(resep.bahan) ? resep.bahan : JSON.parse(resep.bahan as any || '[]');
+  const langkahList = Array.isArray(resep.langkah) ? resep.langkah : JSON.parse(resep.langkah as any || '[]');
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F1F8E9' }}>
@@ -138,14 +179,14 @@ export default function DetailResepScreen() {
               elevation: 2,
             }}
           >
-            {resep.bahan.map((bahan, index) => (
+            {bahanList.map((bahan: string, index: number) => (
               <View
                 key={index}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
                   paddingVertical: 10,
-                  borderBottomWidth: index < resep.bahan.length - 1 ? 1 : 0,
+                  borderBottomWidth: index < bahanList.length - 1 ? 1 : 0,
                   borderBottomColor: '#F5F5F5',
                 }}
               >
@@ -175,7 +216,7 @@ export default function DetailResepScreen() {
           <Text style={{ fontSize: 18, fontWeight: '700', color: '#1a1a1a', marginBottom: 14 }}>
             Langkah Persiapan
           </Text>
-          {resep.langkah.map((langkah, index) => (
+          {langkahList.map((langkah: string, index: number) => (
             <View
               key={index}
               style={{

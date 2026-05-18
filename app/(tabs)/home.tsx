@@ -1,14 +1,73 @@
-import React from 'react';
-import { View, Text, ScrollView, TextInput, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TextInput, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Search } from 'lucide-react-native';
 import FruitCard from '../../components/FruitCard';
 import RecipeCard from '../../components/RecipeCard';
 import StorageTipCard from '../../components/StorageTipCard';
-import { manfaatBuah, resepJus, tipsPenyimpanan, userProfile } from '../../constants/mockData';
+import * as fruitService from '../../services/fruitService';
+import * as authService from '../../services/authService';
+import type { Buah, ResepJus, TipsPenyimpanan } from '../../constants/types';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [userName, setUserName] = useState('Pengguna');
+  const [buahList, setBuahList] = useState<Buah[]>([]);
+  const [resepList, setResepList] = useState<ResepJus[]>([]);
+  const [tipsList, setTipsList] = useState<TipsPenyimpanan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [buah, resep, tips] = await Promise.all([
+        fruitService.getAllBuah(),
+        fruitService.getAllResep(),
+        fruitService.getAllTips(),
+      ]);
+      setBuahList(buah || []);
+      setResepList(resep || []);
+      setTipsList(tips || []);
+
+      // Ambil nama user
+      try {
+        const profile = await authService.getProfile();
+        setUserName(profile.nama);
+      } catch {
+        // Token mungkin expired, tetap tampilkan data
+      }
+    } catch (error) {
+      console.log('Gagal memuat data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter berdasarkan pencarian (semua data, bukan hanya yang ditampilkan)
+  const query = searchQuery.toLowerCase();
+  const filteredBuah = searchQuery
+    ? buahList.filter((b) => b.nama.toLowerCase().includes(query) || b.family.toLowerCase().includes(query))
+    : buahList;
+  const filteredResep = searchQuery
+    ? resepList.filter((r) => r.nama.toLowerCase().includes(query))
+    : resepList;
+  const filteredTips = searchQuery
+    ? tipsList.filter((t) => t.judul.toLowerCase().includes(query) || t.deskripsi.toLowerCase().includes(query))
+    : tipsList;
+  const displayBuah = searchQuery ? filteredBuah : buahList.slice(0, 10);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffffff', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#2E7D32" />
+        <Text style={{ marginTop: 12, color: '#9E9E9E', fontSize: 14 }}>Memuat data...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffffff' }}>
@@ -34,7 +93,7 @@ export default function HomeScreen() {
               Selamat datang,
             </Text>
             <Text style={{ fontSize: 22, fontWeight: '800', color: '#1a1a1a' }}>
-              {userProfile.nama}
+              {userName}
             </Text>
           </View>
         </View>
@@ -60,6 +119,8 @@ export default function HomeScreen() {
             <TextInput
               placeholder="Cari buah, resep, atau tips..."
               placeholderTextColor="#BDBDBD"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
               style={{ flex: 1, marginLeft: 12, fontSize: 14, color: '#1a1a1a' }}
             />
           </View>
@@ -77,7 +138,7 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ fontSize: 18, fontWeight: '700', color: '#1a1a1a' }}>
-              Manfaat Buah
+              Daftar Buah
             </Text>
             <TouchableOpacity 
               activeOpacity={0.7} 
@@ -94,7 +155,7 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingLeft: 20, paddingRight: 6, paddingBottom: 16, paddingTop: 4 }}
           >
-            {manfaatBuah.map((item) => (
+            {displayBuah.map((item) => (
               <FruitCard
                 key={item.id}
                 item={item}
@@ -133,7 +194,7 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingLeft: 20, paddingRight: 6, paddingBottom: 16, paddingTop: 4 }}
           >
-            {resepJus.map((item) => (
+            {filteredResep.map((item) => (
               <RecipeCard
                 key={item.id}
                 item={item}
@@ -159,7 +220,7 @@ export default function HomeScreen() {
             </Text>
           </View>
           <View style={{ paddingHorizontal: 20 }}>
-            {tipsPenyimpanan.map((item) => (
+            {filteredTips.map((item) => (
               <StorageTipCard key={item.id} item={item} />
             ))}
           </View>

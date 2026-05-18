@@ -1,37 +1,67 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft,
   Star,
   Leaf,
-  Heart,
-  Eye,
-  Zap,
-  Citrus,
-  BarChart3,
-  Brain,
-  Shield,
+  Flame,
+  Droplets,
+  Wheat,
+  CakeSlice,
+  Beef,
 } from 'lucide-react-native';
-import { detailBuah } from '../constants/mockData';
-
-const VITAMIN_ICONS: Record<string, React.ComponentType<any>> = {
-  citrus: Citrus,
-  eye: Eye,
-  heart: Heart,
-  zap: Zap,
-};
-
-const HEALTH_ICONS: Record<string, React.ComponentType<any>> = {
-  heart: Heart,
-  leaf: Leaf,
-  'bar-chart-3': BarChart3,
-  brain: Brain,
-};
+import * as fruitService from '../services/fruitService';
+import type { Buah } from '../constants/types';
 
 export default function DetailBuahScreen() {
   const router = useRouter();
-  const data = detailBuah;
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [data, setData] = useState<Buah | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadBuah();
+  }, [id]);
+
+  const loadBuah = async () => {
+    try {
+      const buah = await fruitService.getBuahById(Number(id));
+      setData(buah);
+    } catch (error) {
+      console.log('Gagal memuat detail buah:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#F1F8E9', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#2E7D32" />
+      </View>
+    );
+  }
+
+  if (!data) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#F1F8E9', alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ fontSize: 16, color: '#9E9E9E' }}>Buah tidak ditemukan</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+          <Text style={{ fontSize: 15, color: '#2E7D32', fontWeight: '600' }}>Kembali</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Data nutrisi dari Fruityvice
+  const nutrisiList = [
+    { nama: 'Kalori', jumlah: `${data.kalori} kkal`, ikon: Flame, warna: '#FF6B6B' },
+    { nama: 'Karbohidrat', jumlah: `${data.karbohidrat}g`, ikon: Wheat, warna: '#FF9F43' },
+    { nama: 'Protein', jumlah: `${data.protein}g`, ikon: Beef, warna: '#3B82F6' },
+    { nama: 'Lemak', jumlah: `${data.lemak}g`, ikon: Droplets, warna: '#FECA57' },
+    { nama: 'Gula', jumlah: `${data.gula}g`, ikon: CakeSlice, warna: '#A855F7' },
+  ];
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F1F8E9' }}>
@@ -102,7 +132,7 @@ export default function DetailBuahScreen() {
             {data.nama}
           </Text>
           <Text style={{ fontSize: 14, color: '#9E9E9E', fontStyle: 'italic', marginBottom: 12 }}>
-            {data.namaLatin}
+            {data.family} - {data.genus}
           </Text>
 
           {/* Rating */}
@@ -120,19 +150,34 @@ export default function DetailBuahScreen() {
             </Text>
           </View>
 
-          <Text style={{ fontSize: 14, color: '#666', lineHeight: 22 }}>
-            {data.deskripsi}
-          </Text>
+          {/* Klasifikasi */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
+            <View style={{ backgroundColor: '#E8F5E9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, marginRight: 8, marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, color: '#2E7D32', fontWeight: '600' }}>Family: {data.family}</Text>
+            </View>
+            <View style={{ backgroundColor: '#E3F2FD', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, marginRight: 8, marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, color: '#1565C0', fontWeight: '600' }}>Genus: {data.genus}</Text>
+            </View>
+            <View style={{ backgroundColor: '#FFF3E0', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, color: '#E65100', fontWeight: '600' }}>Ordo: {data.order}</Text>
+            </View>
+          </View>
+
+          {data.deskripsi ? (
+            <Text style={{ fontSize: 14, color: '#666', lineHeight: 22 }}>
+              {data.deskripsi}
+            </Text>
+          ) : null}
         </View>
 
-        {/* Kandungan Vitamin */}
+        {/* Kandungan Nutrisi */}
         <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
           <Text style={{ fontSize: 18, fontWeight: '700', color: '#1a1a1a', marginBottom: 14 }}>
-            Kandungan Vitamin
+            Kandungan Nutrisi (per 100g)
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {data.vitamin.map((vit, index) => {
-              const IconComp = VITAMIN_ICONS[vit.ikon] || Leaf;
+            {nutrisiList.map((item, index) => {
+              const IconComp = item.ikon;
               return (
                 <View
                   key={index}
@@ -155,119 +200,24 @@ export default function DetailBuahScreen() {
                       width: 40,
                       height: 40,
                       borderRadius: 12,
-                      backgroundColor: '#E8F5E9',
+                      backgroundColor: item.warna + '20',
                       alignItems: 'center',
                       justifyContent: 'center',
                       marginBottom: 10,
                     }}
                   >
-                    <IconComp color="#2E7D32" size={20} />
+                    <IconComp color={item.warna} size={20} />
                   </View>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#1a1a1a' }}>
-                    {vit.jumlah}
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#1a1a1a' }}>
+                    {item.jumlah}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#9E9E9E', marginTop: 2 }}>
-                    {vit.nama}
+                    {item.nama}
                   </Text>
                 </View>
               );
             })}
           </View>
-        </View>
-
-        {/* Antioksidan */}
-        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: '#1a1a1a', marginBottom: 14 }}>
-            Antioksidan
-          </Text>
-          {data.antioksidan.map((item, index) => (
-            <View
-              key={index}
-              style={{
-                backgroundColor: '#FFFFFF',
-                borderRadius: 16,
-                padding: 16,
-                marginBottom: 10,
-                flexDirection: 'row',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.06,
-                shadowRadius: 6,
-                elevation: 2,
-              }}
-            >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  backgroundColor: '#E8F5E9',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: 14,
-                }}
-              >
-                <Shield color="#2E7D32" size={20} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 4 }}>
-                  {item.nama}
-                </Text>
-                <Text style={{ fontSize: 13, color: '#9E9E9E', lineHeight: 18 }}>
-                  {item.deskripsi}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* Dampak Kesehatan */}
-        <View style={{ paddingHorizontal: 20 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: '#1a1a1a', marginBottom: 14 }}>
-            Dampak Kesehatan
-          </Text>
-          {data.dampakKesehatan.map((item, index) => {
-            const IconComp = HEALTH_ICONS[item.ikon] || Heart;
-            return (
-              <View
-                key={index}
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: 16,
-                  padding: 16,
-                  marginBottom: 10,
-                  flexDirection: 'row',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.06,
-                  shadowRadius: 6,
-                  elevation: 2,
-                }}
-              >
-                <View
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 12,
-                    backgroundColor: data.warna + '15',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: 14,
-                  }}
-                >
-                  <IconComp color={data.warna} size={20} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 4 }}>
-                    {item.judul}
-                  </Text>
-                  <Text style={{ fontSize: 13, color: '#9E9E9E', lineHeight: 18 }}>
-                    {item.deskripsi}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
         </View>
       </ScrollView>
     </View>

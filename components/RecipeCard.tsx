@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Clock, CupSoda } from 'lucide-react-native';
-import type { ResepJus } from '../constants/mockData';
+import type { ResepJus } from '../constants/types';
 
 interface RecipeCardProps {
   item: ResepJus;

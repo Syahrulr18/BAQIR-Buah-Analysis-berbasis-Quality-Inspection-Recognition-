@@ -12,29 +12,42 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
+import { Eye, EyeOff, User, Lock, Mail } from 'lucide-react-native';
 import Logo from '../components/Logo';
 import * as authService from '../services/authService';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
   const router = useRouter();
+  const [nama, setNama] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Peringatan', 'Email dan kata sandi harus diisi');
+  const handleRegister = async () => {
+    if (!nama || !email || !password || !confirmPassword) {
+      Alert.alert('Peringatan', 'Semua field harus diisi');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Peringatan', 'Kata sandi tidak cocok');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Peringatan', 'Kata sandi minimal 6 karakter');
       return;
     }
 
     setLoading(true);
     try {
-      await authService.login(email, password);
-      router.replace('/(tabs)/home');
+      await authService.register(nama, email, password);
+      Alert.alert('Berhasil', 'Akun berhasil dibuat! Silakan masuk.', [
+        { text: 'OK', onPress: () => router.replace('/login') },
+      ]);
     } catch (error: any) {
-      Alert.alert('Gagal Masuk', error.message || 'Email atau kata sandi salah');
+      Alert.alert('Gagal Mendaftar', error.message || 'Terjadi kesalahan');
     } finally {
       setLoading(false);
     }
@@ -54,7 +67,7 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Logo Area */}
-        <View style={{ alignItems: 'center', marginBottom: 48 }}>
+        <View style={{ alignItems: 'center', marginBottom: 40 }}>
           <View
             style={{
               width: 90,
@@ -95,11 +108,38 @@ export default function LoginScreen() {
           }}
         >
           <Text style={{ fontSize: 22, fontWeight: '700', color: '#1a1a1a', marginBottom: 8 }}>
-            Masuk
+            Daftar
           </Text>
           <Text style={{ fontSize: 14, color: '#9E9E9E', marginBottom: 28 }}>
-            Silakan masuk untuk melanjutkan
+            Buat akun baru untuk memulai
           </Text>
+
+          {/* Nama Input */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#F5F5F5',
+              borderRadius: 14,
+              paddingHorizontal: 14,
+              marginBottom: 14,
+              height: 52,
+            }}
+          >
+            <User color="#9E9E9E" size={20} />
+            <TextInput
+              placeholder="Nama Lengkap"
+              placeholderTextColor="#BDBDBD"
+              value={nama}
+              onChangeText={setNama}
+              style={{
+                flex: 1,
+                marginLeft: 12,
+                fontSize: 15,
+                color: '#1a1a1a',
+              }}
+            />
+          </View>
 
           {/* Email Input */}
           <View
@@ -138,7 +178,7 @@ export default function LoginScreen() {
               backgroundColor: '#F5F5F5',
               borderRadius: 14,
               paddingHorizontal: 14,
-              marginBottom: 10,
+              marginBottom: 14,
               height: 52,
             }}
           >
@@ -165,15 +205,43 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Forgot Password */}
-          <TouchableOpacity style={{ alignSelf: 'flex-end', marginBottom: 24 }}>
-            <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '600' }}>
-              Lupa Kata Sandi?
-            </Text>
-          </TouchableOpacity>
+          {/* Confirm Password Input */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#F5F5F5',
+              borderRadius: 14,
+              paddingHorizontal: 14,
+              marginBottom: 28,
+              height: 52,
+            }}
+          >
+            <Lock color="#9E9E9E" size={20} />
+            <TextInput
+              placeholder="Konfirmasi Kata Sandi"
+              placeholderTextColor="#BDBDBD"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!showConfirm}
+              style={{
+                flex: 1,
+                marginLeft: 12,
+                fontSize: 15,
+                color: '#1a1a1a',
+              }}
+            />
+            <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+              {showConfirm ? (
+                <EyeOff color="#9E9E9E" size={20} />
+              ) : (
+                <Eye color="#9E9E9E" size={20} />
+              )}
+            </TouchableOpacity>
+          </View>
 
-          {/* Login Button */}
-          <TouchableOpacity onPress={handleLogin} activeOpacity={0.85} disabled={loading}>
+          {/* Register Button */}
+          <TouchableOpacity onPress={handleRegister} activeOpacity={0.85} disabled={loading}>
             <LinearGradient
               colors={['#66BB6A', '#2E7D32']}
               start={{ x: 0, y: 0 }}
@@ -194,19 +262,19 @@ export default function LoginScreen() {
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 17 }}>
-                  Masuk
+                  Daftar
                 </Text>
               )}
             </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        {/* Register Link */}
+        {/* Login Link */}
         <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 28 }}>
-          <Text style={{ fontSize: 14, color: '#9E9E9E' }}>Belum punya akun? </Text>
-          <TouchableOpacity onPress={() => router.push('/register')}>
+          <Text style={{ fontSize: 14, color: '#9E9E9E' }}>Sudah punya akun? </Text>
+          <TouchableOpacity onPress={() => router.replace('/login')}>
             <Text style={{ fontSize: 14, color: '#2E7D32', fontWeight: '700' }}>
-              Daftar
+              Masuk
             </Text>
           </TouchableOpacity>
         </View>

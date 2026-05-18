@@ -6,6 +6,8 @@ import {
   SafeAreaView,
   Animated,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -18,11 +20,14 @@ import {
   ScanLine,
   Camera,
 } from "lucide-react-native";
+import * as scanService from "../../services/scanService";
 
 export default function ScanScreen() {
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [flashOn, setFlashOn] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const cameraRef = useRef<any>(null);
   const glowAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -52,10 +57,40 @@ export default function ScanScreen() {
     outputRange: [0, 0.6],
   });
 
-  const handleCapture = () => {
-    router.push("/hasil-analisis");
+  // Kirim gambar ke backend untuk analisis AI
+  const sendForAnalysis = async (imageUri: string) => {
+    setAnalyzing(true);
+    try {
+      const result = await scanService.analyzeScan(imageUri);
+      router.push({
+        pathname: "/hasil-analisis",
+        params: { data: JSON.stringify(result) },
+      });
+    } catch (error: any) {
+      Alert.alert(
+        "Gagal Menganalisis",
+        error.message || "Terjadi kesalahan saat menghubungi server"
+      );
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
+  // Ambil foto dari kamera
+  const handleCapture = async () => {
+    if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
+        if (photo?.uri) {
+          sendForAnalysis(photo.uri);
+        }
+      } catch (error) {
+        Alert.alert("Gagal", "Tidak dapat mengambil foto");
+      }
+    }
+  };
+
+  // Pilih gambar dari galeri
   const pickImageFromGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -65,8 +100,7 @@ export default function ScanScreen() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      // Gambar terpilih, navigasi ke hasil analisis
-      router.push("/hasil-analisis");
+      sendForAnalysis(result.assets[0].uri);
     }
   };
 
@@ -152,11 +186,46 @@ export default function ScanScreen() {
     );
   }
 
+  // Overlay loading saat analisis
+  if (analyzing) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#1a1a1a",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <ActivityIndicator size="large" color="#4CAF50" />
+        <Text
+          style={{
+            color: "#FFFFFF",
+            fontSize: 16,
+            fontWeight: "600",
+            marginTop: 16,
+          }}
+        >
+          Menganalisis buah...
+        </Text>
+        <Text
+          style={{
+            color: "rgba(255,255,255,0.5)",
+            fontSize: 13,
+            marginTop: 8,
+          }}
+        >
+          Mohon tunggu sebentar
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       {/* Camera View */}
-      <CameraView style={{ flex: 1 }} facing="back" enableTorch={flashOn}>
-        {/* Dark overlay di atas & bawah untuk kontras */}
+      <CameraView style={{ flex: 1 }} facing="back" enableTorch={flashOn} ref={cameraRef}>
+        {/* Dark overlay */}
         <View
           style={{
             position: "absolute",
@@ -315,7 +384,7 @@ export default function ScanScreen() {
           </Text>
         </View>
 
-        {/* Bottom Controls — positioned above floating tab bar */}
+        {/* Bottom Controls */}
         <View
           style={{
             position: "absolute",
@@ -354,31 +423,31 @@ export default function ScanScreen() {
               )}
             </TouchableOpacity>
 
+            {/* Capture Button */}
             <TouchableOpacity
+              onPress={handleCapture}
               style={{
                 alignItems: "center",
                 justifyContent: "center",
                 width: 80,
                 height: 80,
-                backgroundColor: "transparent", 
-                borderWidth: 5, 
-                borderColor: "#2E7D32", 
-                borderRadius: 100, 
+                backgroundColor: "transparent",
+                borderWidth: 5,
+                borderColor: "#2E7D32",
+                borderRadius: 100,
+                marginBottom: 20,
               }}
-              className="mb-20"
             >
               <View
-               style={{
-                width: 60,
-                height: 60,
-                borderRadius: 100,
-                backgroundColor: '#2E7D32',
-                borderBlockColor: '#2E7D32',
-                alignItems: 'center',
-                justifyContent: 'center',
-               }}
-
-              ></View>
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 100,
+                  backgroundColor: "#2E7D32",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              />
             </TouchableOpacity>
 
             {/* Gallery */}

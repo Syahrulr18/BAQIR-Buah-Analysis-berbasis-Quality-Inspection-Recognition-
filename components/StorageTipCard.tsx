@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Thermometer, Leaf, Package, Droplets, Snowflake } from 'lucide-react-native';
-import type { TipsPenyimpanan } from '../constants/mockData';
+import type { TipsPenyimpanan } from '../constants/types';
 
 const ICON_MAP: Record<string, React.ComponentType<any>> = {
   thermometer: Thermometer,

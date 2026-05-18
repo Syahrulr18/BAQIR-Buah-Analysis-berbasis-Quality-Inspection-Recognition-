@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   User,
@@ -10,7 +10,7 @@ import {
   LogOut,
   Shield,
 } from 'lucide-react-native';
-import { userProfile } from '../../constants/mockData';
+import * as authService from '../../services/authService';
 
 interface MenuItemProps {
   icon: React.ComponentType<any>;
@@ -54,6 +54,39 @@ function MenuItem({ icon: Icon, label, color = '#1a1a1a', onPress }: MenuItemPro
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const [userName, setUserName] = useState('Pengguna');
+  const [userEmail, setUserEmail] = useState('email@contoh.com');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const profile = await authService.getProfile();
+      setUserName(profile.nama);
+      setUserEmail(profile.email);
+    } catch (error) {
+      console.log('Gagal memuat profil:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert('Konfirmasi', 'Apakah Anda yakin ingin keluar?', [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Keluar',
+        style: 'destructive',
+        onPress: async () => {
+          await authService.logout();
+          router.replace('/login');
+        },
+      },
+    ]);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffffff' }}>
@@ -83,12 +116,18 @@ export default function ProfileScreen() {
           >
             <User color="#FFFFFF" size={40} />
           </View>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: '#1a1a1a' }}>
-            {userProfile.nama}
-          </Text>
-          <Text style={{ fontSize: 14, color: '#9E9E9E', marginTop: 4 }}>
-            {userProfile.email}
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="#2E7D32" style={{ marginTop: 8 }} />
+          ) : (
+            <>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: '#1a1a1a' }}>
+                {userName}
+              </Text>
+              <Text style={{ fontSize: 14, color: '#9E9E9E', marginTop: 4 }}>
+                {userEmail}
+              </Text>
+            </>
+          )}
         </View>
 
         {/* Menu Card */}
@@ -146,7 +185,7 @@ export default function ProfileScreen() {
               icon={LogOut}
               label="Keluar"
               color="#EF4444"
-              onPress={() => router.replace('/login')}
+              onPress={handleLogout}
             />
           </View>
         </View>

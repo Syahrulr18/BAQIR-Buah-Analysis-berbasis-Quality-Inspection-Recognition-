@@ -1,12 +1,30 @@
-import React from 'react';
-import { View, Text, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import RecipeCard from '../components/RecipeCard';
-import { resepJus } from '../constants/mockData';
+import * as fruitService from '../services/fruitService';
+import type { ResepJus } from '../constants/types';
 
 export default function SemuaResepScreen() {
   const router = useRouter();
+  const [resepList, setResepList] = useState<ResepJus[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadResep();
+  }, []);
+
+  const loadResep = async () => {
+    try {
+      const data = await fruitService.getAllResep();
+      setResepList(data || []);
+    } catch (error) {
+      console.log('Gagal memuat data resep:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffffff' }}>
@@ -38,18 +56,24 @@ export default function SemuaResepScreen() {
         </Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 14 }}>
-          {resepJus.map((item) => (
-            <View key={item.id} style={{ width: '47%', marginBottom: 14 }}>
-              <RecipeCard
-                item={item}
-                onPress={() => router.push({ pathname: '/detail-resep', params: { id: item.id } })}
-              />
-            </View>
-          ))}
+      {loading ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color="#2E7D32" />
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView contentContainerStyle={{ padding: 20 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 14 }}>
+            {resepList.map((item) => (
+              <View key={item.id} style={{ width: '47%', marginBottom: 14 }}>
+                <RecipeCard
+                  item={item}
+                  onPress={() => router.push({ pathname: '/detail-resep', params: { id: item.id } })}
+                />
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
